@@ -1,5 +1,5 @@
 
-function Tablallamadas({ llamadas, borraLlamada, llamadaEditada }) {
+function Tablallamadas({ llamadas, borraLlamada, editar }) {
   return (
     <table border={1}>
       <thead>
@@ -19,7 +19,7 @@ function Tablallamadas({ llamadas, borraLlamada, llamadaEditada }) {
               <button onClick={() => borraLlamada(index)}>borrar</button>
             </td>
             <td>
-              <button onClick={()=>llamadaEditada(llamadas)}>editar</button>
+              <button onClick={()=>editar(index)}>editar</button>
             </td>
           </tr>
         ))}
