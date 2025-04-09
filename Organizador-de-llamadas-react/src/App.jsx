@@ -8,34 +8,30 @@ function App() {
   const [duracion,setDuracion]=useState(0);
   const [duracionPromedio,setDuracionPromedio]=useState(0)
   const[ visivilidad,setVisivilidas]=useState(true)
-  const[editorllamadas,setEditorllamadas]=useState(null)
+  const[llamadaAEditar,setllamadaAEditar]=useState(null)
   const[llamadaEditada,setLlamadaEditada]=useState({origen:0,destino:0,duracion:0})
-
-
- function generarLlamadas(cantidadLlamadas){
-  const nuevasLLamadas=[]
-  let duracionTotal =0
- for (let i = 0; i < cantidadLlamadas; i++) {
-   let origen = Math.floor(
-     Math.random() * (9999999999 - 1111111111) + 1111111111
-   );
-   let destino = Math.floor(
-     Math.random() * (9999999999 - 1111111111) + 1111111111
-   );
-   let duracion = Math.floor(Math.random() * (600 - 30 + 1) + 30);
-  nuevasLLamadas.push({ origen,destino,duracion });
-  duracionTotal+=(nuevasLLamadas[i].duracion)
   
- }
-    setLlamads(nuevasLLamadas);
-    setDuracion(duracionTotal)
-    setDuracionPromedio(duracionTotal/cantidadLlamadas)
- }
+  
+  const generarLlamadas = async () => {
+    const respuesta = await fetch("http://localhost:3000/generar-telefonos", 
+        {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body:JSON.stringify({ cantidad: cantidadLlamadas }),
+    });
+
+     const data = await respuesta.json();
+     console.log(data.duracionTotal)
+     setLlamads(data.llamadas);
+     setDuracion(data.duracionTotal);
+     setDuracionPromedio(data.duracionPromedio);
+ };
  function borraLlamada(index){
   if(window.confirm(`Desea eliminar la llamada de origen ${llamadas[index].origen} a destino ${llamadas[index].destino}`)){
     let nuevasLLamadas = llamadas.filter((a, i) => i !== index);
      let nuevaDuracion = 0;
        setLlamads(nuevasLLamadas)
+
        for(let i = 0; i < nuevasLLamadas.length; i++){
         nuevaDuracion+=nuevasLLamadas[i].duracion
        }
@@ -45,21 +41,22 @@ function App() {
   
  }
  function editar(index){
-  setEditorllamadas(index)
+  setllamadaAEditar(index)
   setLlamadaEditada({...llamadas[index]})
  }
+
  function guaardarcambios(){
   const nuevasLlamadas=[...llamadas]
 
-  nuevasLlamadas[editorllamadas] = { ...llamadaEditada };
-  console.log(nuevasLlamadas)
+  nuevasLlamadas[llamadaAEditar] = { ...llamadaEditada };
+  console.log(nuevasLlamadas) 
   setLlamads(nuevasLlamadas)
-  // setEditorllamadas(false)
 
  }
+
   return (
     <>
-      {editorllamadas !== null && llamadaEditada && (
+      {llamadaAEditar !== null && llamadaEditada && (
         <>
           <h3>editar llamada ✏</h3>
           <label>origen:</label>
@@ -70,7 +67,6 @@ function App() {
               setLlamadaEditada({ ...llamadaEditada, origen: e.target.value });
             }}
           />
-
           <label>destino:</label>
           <input
             type="number"
@@ -93,7 +89,7 @@ function App() {
           <button onClick={guaardarcambios}>guardar cambios</button>
           <button
             onClick={() => {
-              setEditorllamadas(null);
+              setllamadaAEditar(null);
               setLlamadaEditada({ origen: 0, destino: 0, duracion: 0 });
             }}
           >
@@ -108,7 +104,7 @@ function App() {
         id="numerosFicticios"
         onChange={(e) => setCantidaLlamadas(Number(e.target.value))}
       />
-      <button id="button" onClick={() => generarLlamadas(cantidadLlamadas)}>
+      <button id="button" onClick={generarLlamadas}>
         generar
       </button>
       {llamadas.length > 0 ? (

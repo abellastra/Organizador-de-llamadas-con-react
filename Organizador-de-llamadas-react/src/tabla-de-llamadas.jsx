@@ -16,7 +16,7 @@ function Tablallamadas({ llamadas, borraLlamada, editar }) {
             <td>{Llamadas.destino}</td>
             <td>{Llamadas.duracion}</td>
             <td>
-              <button onClick={() => borraLlamada(index)}>borrar</button>
+              <button onClick={() => borraLlamada(index) }>borrar</button>
             </td>
             <td>
               <button onClick={()=>editar(index)}>editar</button>
