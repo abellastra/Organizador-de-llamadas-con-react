@@ -11,8 +11,7 @@ app.use(express.json())
 app.post("/generar-telefonos", (req, res) => {
   console.log("BODY RECIBIDO:", req.body);
   const cantidadLlamadas = req.body.cantidad||10;
-  const { llamadas, duracionTotal, duracionPromedio } =
-    generarLlamadas(cantidadLlamadas);
+  const { llamadas, duracionTotal, duracionPromedio } = generarLlamadas(cantidadLlamadas);
   res.json({ llamadas, duracionTotal, duracionPromedio });
 });
 
