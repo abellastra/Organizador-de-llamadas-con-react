@@ -18,7 +18,7 @@ app.post("/generar-telefonos", (req, res) => {
 
 function generarLlamadas(cantidadLlamadas) {
   const nuevasLLamadas = [];
-  let duracionTotal = 0;
+  let duracionTotal= 0;
   for (let i = 0; i < cantidadLlamadas; i++) {
     let origen = Math.floor(
       Math.random() * (9999999999 - 1111111111) + 1111111111
