@@ -21,6 +21,17 @@ function App() {
     error3: "",
   });
 
+  useEffect(() => {
+    fetch("http://localhost:3000/llamadas")
+      .then((res) => res.json())
+      .then((data) => {
+        setLlamads(data);
+      })
+      .catch((error) => {
+        console.error("Error al obtener las llamadas:", error);
+      });
+  },[])
+
   const generarLlamadas = async () => {
     const respuesta = await fetch("http://localhost:3000/generar-telefonos", {
       method: "POST",
@@ -49,7 +60,6 @@ function App() {
     setLlamadaEditada({ ...llamadas[index] });
   }
 
-
   function verificarDatos() {
     let error = false;
     if (llamadaEditada.origen.toString().length !== 10) {
@@ -61,15 +71,11 @@ function App() {
       setMensajeError1((prev) => ({ ...prev, error1: "" }));
     }
 
-
-    if (
-      llamadaEditada.destino.toString().length !== 10
-    ) {
+    if (llamadaEditada.destino.toString().length !== 10) {
       setMensajeError1((prev) => ({ ...prev, error2: "numero invalido" }));
-            console.log(mensajeError1.error2);
-            error = true;
-          console.log(2);
-
+      console.log(mensajeError1.error2);
+      error = true;
+      console.log(2);
     } else {
       setMensajeError1((prev) => ({ ...prev, error2: "" }));
     }
@@ -105,19 +111,19 @@ function App() {
     setllamadaAEditar(null);
   }
 
-    useEffect(() => {
-      actualizarDuracion();
-    }, [llamadas]);
+  useEffect(() => {
+    actualizarDuracion();
+  }, [llamadas]);
 
-    function actualizarDuracion() {
-      let nuevaDuracion = 0;
+  function actualizarDuracion() {
+    let nuevaDuracion = 0;
 
-      for (let i = 0; i < llamadas.length; i++) {
-        nuevaDuracion += Number(llamadas[i].duracion);
-      }
-      setDuracion(nuevaDuracion);
-      setDuracionPromedio(parseInt(nuevaDuracion / llamadas.length));
+    for (let i = 0; i < llamadas.length; i++) {
+      nuevaDuracion += Number(llamadas[i].duracion);
     }
+    setDuracion(nuevaDuracion);
+    setDuracionPromedio(parseInt(nuevaDuracion / llamadas.length));
+  }
 
   return (
     <>
@@ -164,17 +170,16 @@ function App() {
               type="number"
               value={llamadaEditada.origen}
               onChange={(e) => {
-
                 setLlamadaEditada({
                   ...llamadaEditada,
                   origen: e.target.value,
                 });
               }}
             />
-            
-              <p className="text-red-500 text-xl font-bold	">
-                {mensajeError1.error1}
-              </p>  
+
+            <p className="text-red-500 text-xl font-bold	">
+              {mensajeError1.error1}
+            </p>
 
             <label>destino:</label>
             <input
@@ -188,9 +193,9 @@ function App() {
                 });
               }}
             />
-              <p className="text-red-500 text-xl font-bold">
-                {mensajeError1.error2}
-              </p>
+            <p className="text-red-500 text-xl font-bold">
+              {mensajeError1.error2}
+            </p>
 
             <label>duracion:</label>
             <input

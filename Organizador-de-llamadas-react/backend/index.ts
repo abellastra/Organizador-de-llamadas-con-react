@@ -65,6 +65,18 @@ let nuevasLLamadas: {
   const duracionPromedio = duracionTotal / cantidadLlamadas;
   return { llamadas: nuevasLLamadas, duracionTotal, duracionPromedio };
 }
+app.get("/llamadas", async (req,res)=>{
+  try{
+    const [llamadasGuardadas]= await conexion
+    .promise()
+    .execute("SELECT * FROM llamadas");
+    res.json(llamadasGuardadas)
+  }catch(error){
+    console.log("no se pudieron cargar las llamadas ", error)
+    res.status(500).json({ error: "no se pudieron cargar las llamadas " });
+  }
+})
+
 app.post("/generar-telefonos", async(req, res) => {
   const cantidadLlamadas = req.body.cantidad || 10;
   try{
