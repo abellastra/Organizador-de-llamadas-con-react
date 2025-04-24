@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Tablallamadas from "./tabla-de-llamadas";
 import "./App.css";
 
@@ -11,12 +11,15 @@ function App() {
   const [llamadaAEditar, setllamadaAEditar] = useState(null);
   const [bottonBorrar, setBottonBorrar] = useState(null);
   const [llamadaEditada, setLlamadaEditada] = useState({
-    origen: "",
-    destino: "",
-    duracion: "",
+    origen: 0,
+    destino: 0,
+    duracion: 0,
   });
-  const [mensajeError1, setMensajeError1] = useState({error1:'',error2:'',error3:''});
-  const [mensajeError2, setMensajeError2] = useState("");
+  const [mensajeError1, setMensajeError1] = useState({
+    error1: "",
+    error2: "",
+    error3: "",
+  });
 
   const generarLlamadas = async () => {
     const respuesta = await fetch("http://localhost:3000/generar-telefonos", {
@@ -30,76 +33,92 @@ function App() {
     setDuracion(data.duracionTotal);
     setDuracionPromedio(data.duracionPromedio);
   };
-  function borraLlamada(index) {
-    if (borraLlamada !== null) {
-      let nuevasLLamadas = llamadas.filter((a, i) => i !== index);
-      setLlamads(nuevasLLamadas);
 
-      let nuevaDuracion = 0;
-      for (let i = 0; i < nuevasLLamadas.length; i++) {
-        nuevaDuracion += nuevasLLamadas[i].duracion;
-      }
-      setDuracion(nuevaDuracion);
-      setDuracionPromedio(parseInt(nuevaDuracion / nuevasLLamadas.length));
-    }
+  async function borraLlamada(index) {
+    const respuesta = await fetch("http://localhost:3000/borrar-telefonos", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ index: index }),
+    });
+    const data = await respuesta.json();
+    setLlamads(data);
   }
+
   function editar(index) {
     setllamadaAEditar(index);
     setLlamadaEditada({ ...llamadas[index] });
   }
 
-  function guaardarcambios() {
-    const nuevasLlamadas = [...llamadas];
-
-    nuevasLlamadas[llamadaAEditar] = { ...llamadaEditada };
-    setLlamads(nuevasLlamadas);
-    setllamadaAEditar(null);
-  }
 
   function verificarDatos() {
     let error = false;
-    if (
-      llamadaEditada.origen !== "" &&
-      String(llamadaEditada.origen).length !== 10
-    ) {
-      setMensajeError1(prev=>({...prev,error1:"numero invalido"}));
+    if (llamadaEditada.origen.toString().length !== 10) {
+      console.log(1);
+      setMensajeError1((prev) => ({ ...prev, error1: "numero invalido" }));
       error = true;
+      console.log(mensajeError1.error1);
     } else {
-      setMensajeError1("");
+      setMensajeError1((prev) => ({ ...prev, error1: "" }));
     }
 
+
     if (
-      llamadaEditada.destino !== "" &&
-      String(llamadaEditada.destino).length !== 10
+      llamadaEditada.destino.toString().length !== 10
     ) {
-      setMensajeError1(prev=>({...prev,error2:"numero invalido"}));
-      error = true;
+      setMensajeError1((prev) => ({ ...prev, error2: "numero invalido" }));
+            console.log(mensajeError1.error2);
+            error = true;
+          console.log(2);
+
     } else {
-      setMensajeError1("");
+      setMensajeError1((prev) => ({ ...prev, error2: "" }));
     }
 
-     if(llamadaEditada.duracion<30 || llamadaEditada.duracion>600){
-      setMensajeError1(prev=>({...prev, error3:'El valor tine que ser entre 30 y 600'}))
-      error=true;
-     }else{
-            setMensajeError1((prev) => ({
-              ...prev,
-              error3: "",
-            }));
-
-     }
-
-
-
-
-
+    if (llamadaEditada.duracion < 30 || llamadaEditada.duracion > 600) {
+      setMensajeError1((prev) => ({
+        ...prev,
+        error3: "El valor tine que ser entre 30 y 600",
+      }));
+      error = true;
+    } else {
+      setMensajeError1((prev) => ({
+        ...prev,
+        error3: "",
+      }));
+    }
     if (!error) {
       guaardarcambios();
     }
-
-
   }
-  // console.log(llamadaEditada.duracion < 600 && llamadaEditada.duracion>30);
+
+  async function guaardarcambios() {
+    const respuesta = await fetch("http://localhost:3000/editar-telefonos", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        index: llamadaAEditar,
+        llamadaEditada: llamadaEditada,
+      }),
+    });
+    const data = await respuesta.json();
+    setLlamads(data);
+    setllamadaAEditar(null);
+  }
+
+    useEffect(() => {
+      actualizarDuracion();
+    }, [llamadas]);
+
+    function actualizarDuracion() {
+      let nuevaDuracion = 0;
+
+      for (let i = 0; i < llamadas.length; i++) {
+        nuevaDuracion += Number(llamadas[i].duracion);
+      }
+      setDuracion(nuevaDuracion);
+      setDuracionPromedio(parseInt(nuevaDuracion / llamadas.length));
+    }
+
   return (
     <>
       {bottonBorrar !== null && (
@@ -110,7 +129,7 @@ function App() {
           </h3>
           <h4 className="text-lg	mb-10 bg-white p-5 border-3 rounded-xl ">
             {" "}
-            DESEA ELIMINAR ESTA LLAMADA DE:{llamadas[bottonBorrar].origen} A :
+            DESEA ELIMINAR ESTA LLAMADA DE: {llamadas[bottonBorrar].origen} A :
             {llamadas[bottonBorrar].destino}
           </h4>
 
@@ -145,17 +164,17 @@ function App() {
               type="number"
               value={llamadaEditada.origen}
               onChange={(e) => {
+
                 setLlamadaEditada({
                   ...llamadaEditada,
                   origen: e.target.value,
                 });
               }}
             />
-            {mensajeError1 && (
+            
               <p className="text-red-500 text-xl font-bold	">
                 {mensajeError1.error1}
-              </p>
-            )}
+              </p>  
 
             <label>destino:</label>
             <input
@@ -169,11 +188,9 @@ function App() {
                 });
               }}
             />
-            {mensajeError1.error2 !== "" && (
               <p className="text-red-500 text-xl font-bold">
                 {mensajeError1.error2}
               </p>
-            )}
 
             <label>duracion:</label>
             <input
@@ -188,8 +205,7 @@ function App() {
               }}
             />
             <p className="text-red-500 text-xl font-bold">
-              { mensajeError1.error3}
-              
+              {mensajeError1.error3}
             </p>
             <div>
               <button
@@ -222,7 +238,7 @@ function App() {
         >
           ingrese la cantidad de llamadas ficticias q quiere generar
         </label>
-        <div className="mb-5 bg-[#fff] p-3 rounded-xl ">
+        <div className="mb-5 bg-[#fff] p-3 rounded-xl">
           <input
             className="mb-2 m-1 text-center border w-31"
             type="number"
