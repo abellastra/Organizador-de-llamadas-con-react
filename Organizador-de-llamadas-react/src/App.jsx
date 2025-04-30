@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Tablallamadas from "./tabla-de-llamadas";
 import "./App.css";
-
+import ModalGenerico from "./ModalGenerico";
 function App() {
   const [cantidadLlamadas, setCantidaLlamadas] = useState(0);
   const [llamadas, setLlamads] = useState([]);
@@ -9,7 +9,10 @@ function App() {
   const [duracionPromedio, setDuracionPromedio] = useState(0);
   const [visivilidad, setVisivilidas] = useState(true);
   const [llamadaAEditar, setllamadaAEditar] = useState(null);
-  const [bottonBorrar, setBottonBorrar] = useState(null);
+  const [idLlamada, setIdLlamada] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [respuestaDelModal, setRespuestadelModal] = useState(false);
+
   const [llamadaEditada, setLlamadaEditada] = useState({
     origen: 0,
     destino: 0,
@@ -20,36 +23,64 @@ function App() {
     error2: "",
     error3: "",
   });
+  const [estadoDeCarga, setEstadoDeCarga] = useState(true);
 
   useEffect(() => {
     fetch("http://localhost:3000/llamadas")
       .then((res) => res.json())
       .then((data) => {
         setLlamads(data);
+        setTimeout(() => {
+          setEstadoDeCarga(false);
+        }, 1000);
       })
       .catch((error) => {
         console.error("Error al obtener las llamadas:", error);
       });
-  },[])
+  }, []);
+
+ function hayllamadas(){
+if(llamadas.length>0){
+  setModalOpen(true)
+  console.log('abrir modal')
+  
+}  else{
+  generarLlamadas()
+  console.log("s guardo");
+} 
+ }
+ useEffect(()=>{
+  if(respuestaDelModal===true){
+      generarLlamadas();
+  console.log("s guardaro la nueva llamadas");
+
+  }
+setRespuestadelModal(false)
+ },[respuestaDelModal])
 
   const generarLlamadas = async () => {
-    const respuesta = await fetch("http://localhost:3000/generar-telefonos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cantidad: cantidadLlamadas }),
-    });
+      const respuesta = await fetch("http://localhost:3000/generar-telefonos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cantidad: cantidadLlamadas }),
+      });
 
-    const data = await respuesta.json();
-    setLlamads(data.llamadas);
-    setDuracion(data.duracionTotal);
-    setDuracionPromedio(data.duracionPromedio);
+      const data = await respuesta.json();
+      setLlamads(data.llamadas);
+      setDuracion(data.duracionTotal);
+      setDuracionPromedio(data.duracionPromedio);
+      setEstadoDeCarga(true);
+
+      setTimeout(() => {
+        setEstadoDeCarga(false);
+      }, 1000);
   };
 
-  async function borraLlamada(index) {
+  async function borraLlamada(id) {
     const respuesta = await fetch("http://localhost:3000/borrar-telefonos", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ index: index }),
+      body: JSON.stringify({ id: id }),
     });
     const data = await respuesta.json();
     setLlamads(data);
@@ -102,7 +133,6 @@ function App() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        index: llamadaAEditar,
         llamadaEditada: llamadaEditada,
       }),
     });
@@ -111,11 +141,7 @@ function App() {
     setllamadaAEditar(null);
   }
 
-  useEffect(() => {
-    actualizarDuracion();
-  }, [llamadas]);
-
-  function actualizarDuracion() {
+  const actualizarDuracion = useCallback(() => {
     let nuevaDuracion = 0;
 
     for (let i = 0; i < llamadas.length; i++) {
@@ -123,39 +149,70 @@ function App() {
     }
     setDuracion(nuevaDuracion);
     setDuracionPromedio(parseInt(nuevaDuracion / llamadas.length));
-  }
+  }, [llamadas]);
+
+  useEffect(() => {
+    actualizarDuracion();
+  }, [llamadas, actualizarDuracion]);
 
   return (
     <>
-      {bottonBorrar !== null && (
-        <div className=" inset-0 backdrop-blur-md bg-black/50  rounded-xl absolute flex flex-col justify-center items-center p-5">
-          <h3 className="backdrop-blur-md bg-red-500/60 p-5 rounded-xl mb-10 text-3xl	">
-            {" "}
-            ELIMINAR❌{" "}
-          </h3>
-          <h4 className="text-lg	mb-10 bg-white p-5 border-3 rounded-xl ">
-            {" "}
-            DESEA ELIMINAR ESTA LLAMADA DE: {llamadas[bottonBorrar].origen} A :
-            {llamadas[bottonBorrar].destino}
-          </h4>
+      <ModalGenerico isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+        <h2 className="text-xl font-bold mb-4">
+          SEGURO QUE QUIERE GENERAR LLAMADAS
+        </h2>
+        <p>Ya tenes {llamadas.length} llamadas guardadas .</p>
+        <button
+          onClick={() => {
+            setRespuestadelModal(true), setModalOpen(false);
+            // ,guardarNuevasLLamadas()
+          }}
+          className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+        >
+          aceptar
+        </button>
+        <button
+          onClick={() => {
+            setModalOpen(false),
+              setRespuestadelModal(false),
+              setCantidaLlamadas(0);
+          }}
+          className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+        >
+          Cerrar
+        </button>
+      </ModalGenerico>
+      {idLlamada !== null && (
+        <>
+          <div className=" inset-0 backdrop-blur-md bg-black/50  rounded-xl absolute flex flex-col justify-center items-center p-5">
+            <h3 className="backdrop-blur-md bg-red-500/60 p-5 rounded-xl mb-10 text-3xl	">
+              {" "}
+              ELIMINAR❌{" "}
+            </h3>
+            <h4 className="text-xl	mb-11 bg-white p-5 border-3 rounded-xl ">
+              {" "}
+              DESEA ELIMINAR ESTA LLAMADA DE :{idLlamada.origen} A :
+              {idLlamada.destino}
+            </h4>
 
-          <div>
-            <button
-              className="mr-1 border bg-red-100 p-2 rounded-xl hover:bg-[#ff0441]"
-              onClick={() => {
-                borraLlamada(bottonBorrar), setBottonBorrar(null);
-              }}
-            >
-              Eliminar
-            </button>
-            <button
-              className="border bg-green-100 p-2 rounded-xl hover:bg-[#00ff24]"
-              onClick={() => setBottonBorrar(null)}
-            >
-              Cancelar
-            </button>
+            <div>
+              <button
+                className="mr-1 border bg-red-100 p-2 rounded-xl hover:bg-[#ff0441]"
+                onClick={() => {
+                  borraLlamada(idLlamada.id), setIdLlamada(null);
+                }}
+              >
+                Eliminar
+              </button>
+              <button
+                className="border bg-green-100 p-2 rounded-xl hover:bg-[#00ff24]"
+                onClick={() => setIdLlamada(null)}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       <div className="flex flex-col items-center">
@@ -237,6 +294,7 @@ function App() {
         <h1 className="bg-[#000]  text-white text-3xl	 border font-bold w-fit p-4 mb-6 rounded-xl ">
           Listar llamadas
         </h1>
+
         <label
           className="mb-3 p-2 rounded-xl bg-[#fff] text-lg font-medium "
           htmlFor="numerosFicticios "
@@ -253,26 +311,30 @@ function App() {
           <button
             id="button"
             className="rounded-xl bg-[#3300FF] hover:bg-[#000066] ... w-fit px-7 py-1"
-            onClick={generarLlamadas}
+            onClick={hayllamadas}
           >
             generar
           </button>
         </div>
-
-        {llamadas.length > 0 ? (
+        {estadoDeCarga ? (
+          <div className="loader"></div>
+        ) : llamadas.length > 0 ? (
           <>
             <Tablallamadas
               llamadas={llamadas}
               borraLlamada={borraLlamada}
               editar={editar}
-              setBottonBorrar={setBottonBorrar}
+              setIdLlamada={setIdLlamada}
             />
-            <button
-              className=" bg-[#fff] border rounded-xl p-2"
-              onClick={() => setVisivilidas(!visivilidad)}
-            >
-              {visivilidad ? "Mostrar promedios" : "ocultar promedios"}{" "}
-            </button>
+              <button
+                className=" bg-gray-900/100 border rounded-xl p-2 text-white"
+                onClick={() => setVisivilidas(!visivilidad)}
+              >
+                {visivilidad ? "Mostrar promedios" : "ocultar promedios"}{" "}
+              </button>
+              <button className="bg-gray-900/100 border rounded-xl p-2 text-white">
+                add llamada
+              </button>
 
             <table
               className="border bg-[#fff]"

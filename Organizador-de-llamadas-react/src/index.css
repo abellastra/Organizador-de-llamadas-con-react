@@ -1,5 +1,5 @@
 @import 'tailwindcss';
 
 body{
-    @apply bg-[#888] m-0 font-sans;
+  @apply bg-gradient-to-r from-black via-gray-800 to-blue-800 m-0 font-sans;
 }

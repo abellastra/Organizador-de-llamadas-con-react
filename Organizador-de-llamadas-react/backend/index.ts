@@ -10,26 +10,21 @@ const puerto = 3000;
 app.use(cors());
 app.use(express.json());
 
-let nuevasLLamadas: {
-  origen: number;
-  destino: number;
-  duracion: number;
-}[] = [];
 
- async function generarLlamadas(cantidadLlamadas: number) {
-  nuevasLLamadas=[]
+
+async function generarLlamadas(cantidadLlamadas: number) {
   let duracionTotal = 0;
-  await new Promise<void>((resolve,reject)=>{
-  conexion.query("DELETE FROM llamadas",(err:QueryError|null)=>{
-  if (err) {
-          console.error("error al borrar la llamadas viejas al actualizar", err);
-          reject(err);
-        } else {
-          console.log("llamadas anteeriores borradas")
-          resolve();
-        }
-  })
-  })
+  await new Promise<void>((resolve, reject) => {
+    conexion.query("DELETE FROM llamadas", (err: QueryError | null) => {
+      if (err) {
+        console.error("error al borrar la llamadas viejas al actualizar", err);
+        reject(err);
+      } else {
+        console.log("llamadas anteeriores borradas");
+        resolve();
+      }
+    });
+  });
   for (let i = 0; i < cantidadLlamadas; i++) {
     let origen = Math.floor(
       Math.random() * (9999999999 - 1111111111) + 1111111111
@@ -48,14 +43,12 @@ let nuevasLLamadas: {
           console.error("error al guardar ", err);
           reject(err);
         } else {
-          resolve();
+          resolve(  );
         }
       });
     });
 
-     nuevasLLamadas.push({ origen, destino, duracion });
-
-    duracionTotal += nuevasLLamadas[i].duracion;
+   
   }
   const [resultadoDB] = await conexion
     .promise()
@@ -63,55 +56,105 @@ let nuevasLLamadas: {
   console.log(resultadoDB);
 
   const duracionPromedio = duracionTotal / cantidadLlamadas;
-  return { llamadas: nuevasLLamadas, duracionTotal, duracionPromedio };
+  return { llamadas: resultadoDB, duracionTotal, duracionPromedio };
 }
-app.get("/llamadas", async (req,res)=>{
-  try{
-    const [llamadasGuardadas]= await conexion
-    .promise()
-    .execute("SELECT * FROM llamadas");
-    res.json(llamadasGuardadas)
-  }catch(error){
-    console.log("no se pudieron cargar las llamadas ", error)
+
+
+app.get("/llamadas", async (req, res) => {
+  try {
+    const [llamadasGuardadas] = await conexion
+      .promise()
+      .execute("SELECT * FROM llamadas");
+    res.json(llamadasGuardadas);
+  } catch (error) {
+    console.log("no se pudieron cargar las llamadas ", error);
     res.status(500).json({ error: "no se pudieron cargar las llamadas " });
   }
-})
+});
 
-app.post("/generar-telefonos", async(req, res) => {
-  const cantidadLlamadas = req.body.cantidad || 10;
-  try{
-  const { llamadas, duracionTotal, duracionPromedio } = await
-    generarLlamadas(cantidadLlamadas);
-  res.json({ llamadas, duracionTotal, duracionPromedio });
-  }catch(error){
-    console.error("Error al generar llamadas ",error)
-    res.status(500).json({error:"error al generrar llamadas"})
+app.post("/generar-telefonos", async (req, res) => {
+  const cantidadLlamadas = req.body.cantidad;
+  try {
+    const { llamadas, duracionTotal, duracionPromedio } = await generarLlamadas(
+      cantidadLlamadas
+    );
+    res.json({ llamadas, duracionTotal, duracionPromedio });
+  } catch (error) {
+    console.error("Error al generar llamadas ", error);
+    res.status(500).json({ error: "error al generrar llamadas" });
   }
 });
 
 app.put("/editar-telefonos", (req, res) => {
-  const { index, llamadaEditada } = req.body;
+  const { llamadaEditada } = req.body;
+  console.log(llamadaEditada, llamadaEditada.id);
+  if (typeof llamadaEditada.id !== "number" || llamadaEditada.id < 0) {
+    res.status(400).json({ error: "id inválido" });
+    return;
+  }
+
   if (
-    typeof index !== "number" ||
-    index < 0 ||
-    index >= nuevasLLamadas.length
-  ) {
-    res.status(400).json({ error: "índice inválido" });
-  } else if (
     llamadaEditada.origen.toString().length === 10 &&
     llamadaEditada.destino.toString().length === 10
   ) {
-    nuevasLLamadas[index] = { ...llamadaEditada };
-    res.json(nuevasLLamadas);
+    const actualizarLlamada =
+      "UPDATE llamadas SET origen =?,destino=?,duracion=? WHERE id=?";
+    conexion.query(
+      actualizarLlamada,
+      [
+        llamadaEditada.origen,
+        llamadaEditada.destino,
+        llamadaEditada.duracion,
+        llamadaEditada.id,
+      ],
+      (err, result) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({ error: "error al actualizar la llamada" });
+        }
+
+        conexion.query("SELECT * FROM llamadas ", (err, result) => {
+          if (err) {
+            console.log(typeof llamadaEditada.id,'llamada id');
+            return res
+              .status(500)
+              .json({ error: "error al obtener las llamadas " });
+          }
+
+          return res.json(result);
+        });
+      }
+    );
+    return; 
   }
 });
 
 app.delete("/borrar-telefonos", (req, res) => {
-  const { index } = req.body;
-  if (index >= 0) {
-    nuevasLLamadas.splice(index, 1);
+  const { id} = req.body;
+  if (id >= 0) {
+    const borrarLlamada = "DELETE FROM llamadas WHERE id=?";
+
+    conexion.query(borrarLlamada, [id], (err, result) => {
+      if (err) {
+        console.log(id);
+        console.log("error al borrar la llamada ", err);
+        return res.status(500).json({ error: "error al borrar " });
+      }
+
+      conexion.query("SELECT * FROM llamadas ", (err, result) => {
+        if (err) {
+          console.log(typeof id);
+
+          return res
+            .status(500)
+            .json({ error: "error al obtener las llamadas " });
+        }
+
+        return res.json(result);
+      });
+    });
   }
-  res.json(nuevasLLamadas);
 });
 
 app.listen(3000, () => {
