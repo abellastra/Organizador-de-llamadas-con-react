@@ -3,6 +3,7 @@ import express, { Request, Response } from "express";
 import { conexion } from "./db";
 
 import { QueryError } from "mysql2";
+import { error } from "console";
 
 const app = express();
 const puerto = 3000;
@@ -72,6 +73,8 @@ app.get("/llamadas", async (req, res) => {
   }
 });
 
+
+
 app.post("/generar-telefonos", async (req, res) => {
   const cantidadLlamadas = req.body.cantidad;
   try {
@@ -84,6 +87,31 @@ app.post("/generar-telefonos", async (req, res) => {
     res.status(500).json({ error: "error al generrar llamadas" });
   }
 });
+
+
+
+app.post("/generar-NuevoTelefono",(req, res) => {
+  const { origen, destino, duracion } = req.body
+  console.log(origen,destino,duracion)
+  const query = "INSERT INTO llamadas (origen ,destino,duracion) VALUES(?,?,?)";
+  const valores = [origen, destino, duracion];
+  conexion.query(query, valores, (err, result) => {
+    if (err) {
+      console.log("No se pudo agregar la llamda ", err);
+      return res.status(500).json({ error: "No se pudo agregar la llamda " });
+    }
+  });
+  conexion.query("SELECT * FROM llamadas ", (err, result) => {
+    if (err) {
+      console.log("Erroer alobtener la llamada ");
+      return res.status(500).json({ error: "error al obtener las llamadas " });
+    }
+
+    return res.json(result);
+  });
+});
+
+
 
 app.put("/editar-telefonos", (req, res) => {
   const { llamadaEditada } = req.body;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Tablallamadas from "./tabla-de-llamadas";
 import "./App.css";
 import ModalGenerico from "./ModalGenerico";
+import AgreagrLlamadas from "./AgregarLlamada";
 function App() {
   const [cantidadLlamadas, setCantidaLlamadas] = useState(0);
   const [llamadas, setLlamads] = useState([]);
@@ -25,6 +26,7 @@ function App() {
   });
   const [estadoDeCarga, setEstadoDeCarga] = useState(true);
 
+  const[addLlamada,setAddLlamada]=useState(null)
   useEffect(() => {
     fetch("http://localhost:3000/llamadas")
       .then((res) => res.json())
@@ -165,9 +167,8 @@ setRespuestadelModal(false)
         <button
           onClick={() => {
             setRespuestadelModal(true), setModalOpen(false);
-            // ,guardarNuevasLLamadas()
           }}
-          className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+          className="mt-4 bg-blue-600 hover:bg-blued-700 text-white px-4 py-2 m-2 rounded"
         >
           aceptar
         </button>
@@ -177,7 +178,7 @@ setRespuestadelModal(false)
               setRespuestadelModal(false),
               setCantidaLlamadas(0);
           }}
-          className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
           Cerrar
         </button>
@@ -326,15 +327,20 @@ setRespuestadelModal(false)
               editar={editar}
               setIdLlamada={setIdLlamada}
             />
-              <button
-                className=" bg-gray-900/100 border rounded-xl p-2 text-white"
-                onClick={() => setVisivilidas(!visivilidad)}
-              >
-                {visivilidad ? "Mostrar promedios" : "ocultar promedios"}{" "}
-              </button>
-              <button className="bg-gray-900/100 border rounded-xl p-2 text-white">
-                add llamada
-              </button>
+            <button
+              className=" bg-gray-900/100 border rounded-xl p-2 text-white"
+              onClick={() => setVisivilidas(!visivilidad)}
+            >
+              {visivilidad ? "Mostrar promedios" : "ocultar promedios"}{" "}
+            </button>
+
+            <button
+              className="bg-gray-900/100 border rounded-xl p-2 text-white"
+              onClick={()=>setAddLlamada(true)}
+            >
+              add llamada
+            </button>
+            {addLlamada !== null && <AgreagrLlamadas setAddLlamada= {setAddLlamada} setLlamads={setLlamads}/>}
 
             <table
               className="border bg-[#fff]"
