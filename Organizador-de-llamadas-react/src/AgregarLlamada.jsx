@@ -1,4 +1,5 @@
 import { useState } from "react";
+import VerificarDatos from "./VerificarDatos";
  function AgreagrLlamadas({ setAddLlamada, setLlamads }) {
    const [mensajeError, setMensajeError] = useState({
      error1: "",
@@ -11,43 +12,19 @@ import { useState } from "react";
      duracion: 0,
    });
 
-   function validar() {
-     let error = false;
-     if (nuevaLlamada.origen.toString().length !== 10) {
-       console.log(1);
-       setMensajeError((prev) => ({ ...prev, error1: "numero invalido" }));
-       error = true;
-       console.log(mensajeError.error1);
-     } else {
-       setMensajeError((prev) => ({ ...prev, error1: "" }));
-     }
 
-     if (nuevaLlamada.destino.toString().length !== 10) {
-       setMensajeError((prev) => ({ ...prev, error2: "numero invalido" }));
-       console.log(mensajeError.error2);
-       error = true;
-       console.log(2);
-     } else {
-       setMensajeError((prev) => ({ ...prev, error2: "" }));
-     }
-
-     if (nuevaLlamada.duracion < 30 || nuevaLlamada.duracion > 600) {
-       setMensajeError((prev) => ({
-         ...prev,
-         error3: "El valor tine que ser entre 30 y 600",
-       }));
-       error = true;
-     } else {
-       setMensajeError((prev) => ({
-         ...prev,
-         error3: "",
-       }));
-     }
-     if (!error) {
+ 
+   function verificar(){
+     const { errores, hayErrores } = VerificarDatos(nuevaLlamada);
+     setMensajeError(errores)
+      if (!hayErrores) {
        guardarcambios();
-     }
    }
+     
+   }
+ 
    async function guardarcambios() {
+    console.log('ESTA GUARDANDO ')
      const respuesta = await fetch(
        "http://localhost:3000/generar-NuevoTelefono",
        {
@@ -86,7 +63,6 @@ import { useState } from "react";
 
        <label>duracion:</label>
        <input
-       
          className="m-2 border text-center bg-[#fff] rounded-xl p-2"
          type="number"
          onChange={(e) => {
@@ -97,9 +73,9 @@ import { useState } from "react";
        <div>
          <button
            className="m-2 border rounded-xl p-1 bg-green-100 hover:bg-[#00ff24]"
-           onClick={validar}
+           onClick={verificar}
          >
-           guardar cambios
+           guardar nueva llamada
          </button>
 
          <button

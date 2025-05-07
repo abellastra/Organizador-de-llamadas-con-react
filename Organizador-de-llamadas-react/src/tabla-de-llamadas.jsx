@@ -1,5 +1,13 @@
-
-function Tablallamadas({ llamadas, /*borraLlamada */ editar, setIdLlamada }) {
+function Tablallamadas({
+  llamadas,
+  setllamadaAEditar,
+  setIdLlamada,
+  setLlamadaEditada,
+}) {
+  function editar(index) {
+    setllamadaAEditar(index);
+    setLlamadaEditada({ ...llamadas[index] });
+  }
   return (
     <div className=" h-[500px] overflow-y-auto border rounded">
       <table className="border bg-gray-900/100 mb-2  text-white">
@@ -41,4 +49,4 @@ function Tablallamadas({ llamadas, /*borraLlamada */ editar, setIdLlamada }) {
     </div>
   );
 }
-export default Tablallamadas
+export default Tablallamadas;

@@ -3,7 +3,6 @@ import express, { Request, Response } from "express";
 import { conexion } from "./db";
 
 import { QueryError } from "mysql2";
-import { error } from "console";
 
 const app = express();
 const puerto = 3000;
